@@ -9,7 +9,7 @@ fileshell.py -- a File-IO based remote shell, for use where there is no direct c
 				-c target: client mode, connect to target
 				-s: server mode, listen for requests
 
-				Tested to work on python 2.7.
+				Tested to work on python 2.7. Does not require administrative privileges.
 
 				Composed of a single client (runs on attacker machine) and one or more servers
 				(run on compromised machines).
