@@ -2,6 +2,12 @@
 fileshell.py -- a File-IO based remote shell, for use where there is no direct communication
 				channel between the attacker and the owned target, but they can communicate
 				by writing and reading files to/from a remote share/file server etc.
+				
+				Usage: python fileshell.py share_root {-c target | -s}
+				share_root: the path to the root directory where the files for communication
+				will be located.
+				-c target: client mode, connect to target
+				-s: server mode, listen for requests
 
 				Tested to work on python 2.7.
 
@@ -15,3 +21,4 @@ fileshell.py -- a File-IO based remote shell, for use where there is no direct c
 				3. Client side features shell-like behaviour, with extra commands:
 					a. cc <hostname>: changes context (starts new session) to that of hostname.
 					b. exit: exits current session gracefully.
+					
