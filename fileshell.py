@@ -114,7 +114,6 @@ def _verify_hmac(msg, key):
 	# compare_digest() not available, so try timing-insensitive verification
 	result = sum([ord(a) ^ ord(b) for (a,b) in zip(original_hmac, calculated_hmac)])
 	return result == 0
-	#return hmac.new(key, original_msg, hashlib.sha256).digest() == original_hmac
 
 ############################## END MODULE FUNCTIONS ##############################
 
@@ -162,7 +161,13 @@ class FileCommServer():
 			self.in_fd = open(self.infile, 'rb')
 			first_data = self.in_fd.read()
 			self.in_fd.close()
+		except IOError:
+			self.in_fd = open(self.infile, 'w').close()
+			self.in_fd = open(self.infile, 'rb')
+			first_data = self.in_fd.read()
+			self.in_fd.close()
 
+		try:
 			self.in_fd = open(self.infile, 'wb+')
 			self.out_fd = open(self.outfile, 'wb+')
 			_clear_and_write(first_data, self.in_fd)
@@ -171,7 +176,7 @@ class FileCommServer():
 
 
 	def _get_guid(self):
-		return _get_guid_from_name(socket.gethostname())
+		return _get_guid_from_name(socket.gethostname().lower())
 
 	def execute(self):
 		try:
