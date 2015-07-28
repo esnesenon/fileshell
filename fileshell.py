@@ -158,16 +158,12 @@ class FileCommServer():
 
 		try:
 			# Fix for the infinite loop occuring when client starts before server
-			self.in_fd = open(self.infile, 'rb')
-			first_data = self.in_fd.read()
-			self.in_fd.close()
-		except IOError:
-			self.in_fd = open(self.infile, 'w').close()
-			self.in_fd = open(self.infile, 'rb')
+			# Opening with 'ab+' will create the file if it doesn't exist, and at the 
+			# same time not truncate it when closed, which is the behaviour we want.
+			self.in_fd = open(self.infile, 'ab+')
 			first_data = self.in_fd.read()
 			self.in_fd.close()
 
-		try:
 			self.in_fd = open(self.infile, 'wb+')
 			self.out_fd = open(self.outfile, 'wb+')
 			_clear_and_write(first_data, self.in_fd)
