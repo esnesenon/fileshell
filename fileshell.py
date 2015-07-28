@@ -145,7 +145,7 @@ class FileCommServer():
 	def __init__(self, share_path):
 		self.share = share_path
 		self._guid = self._get_guid()
-		self.comm_path = self.comm_path = os.path.join(self.share, self._guid)
+		self.comm_path = os.path.join(self.share, self._guid)
 		self.exec_ctr = 0
 		self.session_key, self.sign_key, self.cipher = None, None, None
 		print("[*] Initializing:: Server GUID = {}".format((self._guid)))
