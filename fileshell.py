@@ -38,8 +38,16 @@ fileshell.py -- a File-IO based remote shell, for use where there is no direct c
 '''
 
 
-import os, sys, threading, socket, base64, hashlib, time
-import subprocess, binascii, hmac
+import os
+import sys
+import threading
+import socket
+import base64
+import hashlib
+import time
+import subprocess
+import binascii,
+import hmac
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
 
@@ -51,7 +59,7 @@ OUT_FILENAME = "out"
 
 
 ############################## START MODULE FUNCTIONS ##############################
-def _get_guid_from_name(name = None):
+def _get_guid_from_name(name):
 	if name == None:
 		return None
 
@@ -61,7 +69,7 @@ def _get_guid_from_name(name = None):
 
 def _clear_and_write(data, fd):
 	'''
-	Writes data into the beginning fd properly.
+	Writes data into the beginning of fd properly.
 	'''
 	if fd == None or data == None:
 		return
@@ -187,7 +195,7 @@ class FileCommServer():
 						try:
 							in_data = base64.b64decode(in_data)
 							verified = _verify_hmac(in_data, self.sign_key)
-							if verified == False:
+							if not verified:
 								self.write("[**] WARNING: Server received data with incorrect HMAC. Your connection might be tampered with!")
 								continue
 						except (AssertionError, TypeError):
@@ -347,7 +355,7 @@ class FileCommClient():
 				try:
 					decrypted_data = base64.b64decode(in_data)
 					verified = _verify_hmac(decrypted_data, self.sign_key)
-					if verified == False:
+					if not verified:
 						print("[**] WARNING: Client received data with incorrect HMAC. Your connection might be tampered with!")
 						io_event.clear()
 						continue
