@@ -1,5 +1,5 @@
 # fileshell
-fileshell.py -- a File-IO based remote shell, for use where there is no direct communication
+fileshell.py -- a file based remote shell, for use where there is no direct communication
 				channel between the attacker and the owned target, but they can communicate
 				by writing and reading files to/from a remote share/file server etc, or where other forms 
 				of communication are monitored.
